@@ -1,0 +1,23 @@
+# Flask web framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Deep learning frameworks
+torch==2.1.2
+torchvision==0.16.2
+
+# Computer vision
+opencv-python>=4.8.0
+numpy<2
+pillow>=10.0.0
+
+# Instance segmentation models
+ultralytics>=8.0.0
+mmcv==2.1.0
+mmdet>=3.0.0
+mmengine>=0.8.0
+pycocotools>=2.0.0
+
+# Background removal
+rembg>=2.0.0
+onnxruntime>=1.15.0

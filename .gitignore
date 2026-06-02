@@ -1,0 +1,45 @@
+# Markdown documentation files
+*.md
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Virtual environments
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dataset and MMDetection folders
+deteccion-partes-2/
+mmdetection/
+
+# Training folder
+training/
+
+# Claude folder
+.claude/
+
+# Testing folder (except best2 models)
+testing/*
+!testing/best2/
+
+# Web skripsi - ignore auto-downloaded dependencies
+web_skripsi/miniconda3/
+web_skripsi/mmdetection/
+
+# Documents
+*.docx
+*.xlsx
+~$*
