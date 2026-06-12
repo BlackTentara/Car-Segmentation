@@ -25,8 +25,23 @@ Thumbs.db
 deteccion-partes-2/
 mmdetection/
 
-# Training folder
-training/
+# Training folder - ignore everything except batch2 notebooks
+training/*
+!training/htc/
+!training/yolact/
+!training/yolo_sam/
+!training/maskrcnn/
+!training/yolo/
+training/htc/*
+training/yolact/*
+training/yolo_sam/*
+training/maskrcnn/*
+training/yolo/*
+!training/htc/*_batch2.ipynb
+!training/yolact/*_batch2.ipynb
+!training/yolo_sam/*_batch2.ipynb
+!training/maskrcnn/*_batch2.ipynb
+!training/yolo/*_batch2.ipynb
 
 # Claude folder
 .claude/
