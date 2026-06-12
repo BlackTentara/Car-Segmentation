@@ -13,15 +13,8 @@ let scene, camera, renderer, car3D;
 
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initParticles();
-  init3DCar();
-  initGSAPAnimations();
   initUploadZone();
   initColorSwatches();
-  initNavScroll();
-  initModelCardHover();
-  initChartAnimations();
-  observeSections();
 });
 
 // ─── Particle Background (particles.js) ───────────────────────
@@ -408,7 +401,7 @@ async function generateMask() {
         image: imageBase64,
         model: modelValue,
         method: methodValue,
-        confidence: 0.3,
+        confidence: 0.5,
         use_car_detector: useCarDetector
       })
     });
@@ -567,7 +560,66 @@ function updateColorFromRGB() {
   document.querySelectorAll('.preset-swatch').forEach(s => s.classList.remove('selected'));
 }
 
-// ─── Color Application (REAL API CALL) ───────────────────────
+// ─── OLD Color Application (COMMENTED OUT - KEPT FOR REFERENCE) ──────
+// async function applyColorOld() {
+//   if (!uploadedImage || !maskData) { alert('Please generate a mask first.'); return; }
+//
+//   try {
+//     // Convert image to base64
+//     const canvas = document.createElement('canvas');
+//     canvas.width = uploadedImage.naturalWidth || uploadedImage.width;
+//     canvas.height = uploadedImage.naturalHeight || uploadedImage.height;
+//     const ctx = canvas.getContext('2d');
+//     ctx.drawImage(uploadedImage, 0, 0);
+//     const imageBase64 = canvas.toDataURL('image/png');
+//
+//     // Convert mask to base64
+//     const maskCanvas = document.createElement('canvas');
+//     maskCanvas.width = maskData.width;
+//     maskCanvas.height = maskData.height;
+//     const maskCtx = maskCanvas.getContext('2d');
+//     maskCtx.putImageData(maskData, 0, 0);
+//     const maskBase64 = maskCanvas.toDataURL('image/png');
+//
+//     // Call backend API (OLD METHOD)
+//     const response = await fetch('http://localhost:5000/api/colorize_old', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({
+//         image: imageBase64,
+//         mask: maskBase64,
+//         color: selectedColor
+//       })
+//     });
+//
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Colorization failed');
+//     }
+//
+//     const result = await response.json();
+//
+//     // Display result
+//     const resultImg = new Image();
+//     resultImg.onload = () => {
+//       const resultCanvas = document.getElementById('resultCanvas');
+//       resultCanvas.width = resultImg.width;
+//       resultCanvas.height = resultImg.height;
+//       const resultCtx = resultCanvas.getContext('2d');
+//       resultCtx.drawImage(resultImg, 0, 0);
+//
+//       document.getElementById('colorOrigImg').src = uploadedImage.src;
+//       document.getElementById('downloadBtn').style.display = 'inline-flex';
+//     };
+//     resultImg.src = result.result;
+//
+//   } catch (error) {
+//     console.error('Colorization error:', error);
+//     alert(`Error: ${error.message}\n\nMake sure the Flask backend is running (python app.py)`);
+//   }
+// }
+
+// ─── Color Application (HYBRID LIGHTING-PRESERVING METHOD) ──────
 async function applyColor() {
   if (!uploadedImage || !maskData) { alert('Please generate a mask first.'); return; }
 
@@ -588,7 +640,7 @@ async function applyColor() {
     maskCtx.putImageData(maskData, 0, 0);
     const maskBase64 = maskCanvas.toDataURL('image/png');
 
-    // Call backend API
+    // Call backend API (HYBRID method)
     const response = await fetch('http://localhost:5000/api/colorize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

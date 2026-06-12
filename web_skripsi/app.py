@@ -477,8 +477,60 @@ def create_method2_mask(image_np, masks, labels):
     return (wrappable_mask * 255).astype(np.uint8)
 
 
-def apply_hsv_color(image_np, mask_np, target_color_hex):
-    """Apply HSV color transformation to masked regions ONLY"""
+# ============================================================================
+# OLD COLORIZATION METHOD (COMMENTED OUT - KEPT FOR REFERENCE)
+# ============================================================================
+# def apply_hsv_color(image_np, mask_np, target_color_hex):
+#     """Apply HSV color transformation to masked regions ONLY (ORIGINAL METHOD)"""
+#     # Convert hex to RGB
+#     target_color_hex = target_color_hex.lstrip('#')
+#     target_r = int(target_color_hex[0:2], 16)
+#     target_g = int(target_color_hex[2:4], 16)
+#     target_b = int(target_color_hex[4:6], 16)
+#
+#     # Convert target color to HSV
+#     target_rgb = np.uint8([[[target_r, target_g, target_b]]])
+#     target_hsv = cv2.cvtColor(target_rgb, cv2.COLOR_RGB2HSV)[0, 0]
+#     target_h, target_s, target_v = target_hsv
+#
+#     # Check if image has alpha channel
+#     has_alpha = len(image_np.shape) == 3 and image_np.shape[2] == 4
+#
+#     # Work with BGR (strip alpha if present)
+#     if has_alpha:
+#         result = image_np.copy()
+#         image_bgr = image_np[:, :, :3]  # Strip alpha for processing
+#     else:
+#         result = image_np.copy()
+#         image_bgr = image_np
+#
+#     # Convert to HSV for processing
+#     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+#     image_hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV).astype(np.float32)
+#
+#     # Apply color ONLY to masked regions
+#     mask_bool = mask_np > 128
+#     image_hsv[mask_bool, 0] = target_h  # Hue
+#     image_hsv[mask_bool, 1] = min(target_s * 1.1, 255)  # Saturation
+#     # Keep original Value to preserve lighting
+#
+#     # Convert back to BGR
+#     image_hsv = np.clip(image_hsv, 0, 255).astype(np.uint8)
+#     colored_rgb = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2RGB)
+#     colored_bgr = cv2.cvtColor(colored_rgb, cv2.COLOR_RGB2BGR)
+#
+#     # Only apply masked pixels to result (only BGR channels)
+#     result[mask_bool, :3] = colored_bgr[mask_bool]
+#
+#     return result
+
+
+def apply_lighting_preserving_color(image_np, mask_np, target_color_hex):
+    """
+    Apply color using HYBRID technique (NEW METHOD)
+    Combines HSV color shift with detail preservation
+    Better dark colors while maintaining realistic lighting/reflections
+    """
     # Convert hex to RGB
     target_color_hex = target_color_hex.lstrip('#')
     target_r = int(target_color_hex[0:2], 16)
@@ -496,27 +548,45 @@ def apply_hsv_color(image_np, mask_np, target_color_hex):
     # Work with BGR (strip alpha if present)
     if has_alpha:
         result = image_np.copy()
-        image_bgr = image_np[:, :, :3]  # Strip alpha for processing
+        image_bgr = image_np[:, :, :3]
     else:
         result = image_np.copy()
         image_bgr = image_np
 
-    # Convert to HSV for processing
+    mask_bool = mask_np > 128
+
+    # Convert to HSV
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     image_hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV).astype(np.float32)
 
-    # Apply color ONLY to masked regions
-    mask_bool = mask_np > 128
-    image_hsv[mask_bool, 0] = target_h  # Hue
-    image_hsv[mask_bool, 1] = min(target_s * 1.1, 255)  # Saturation
-    # Keep original Value to preserve lighting
+    # Store original Value channel (brightness/lighting)
+    original_v = image_hsv[:, :, 2].copy()
 
-    # Convert back to BGR
+    # Apply Hue and Saturation (like original method)
+    image_hsv[mask_bool, 0] = target_h
+    image_hsv[mask_bool, 1] = min(target_s * 1.1, 255)
+
+    # HYBRID: Adjust Value based on target color darkness
+    # Calculate target brightness factor (0.0 = black, 1.0 = white)
+    target_brightness = target_v / 255.0
+
+    # For dark colors, reduce brightness proportionally while keeping some variation
+    # For bright colors, keep original brightness
+    if target_brightness < 0.5:  # Dark color
+        # Scale down brightness but preserve highlights/shadows
+        # Use power curve to maintain contrast
+        brightness_adjustment = np.power(original_v / 255.0, 0.7) * target_brightness
+        image_hsv[mask_bool, 2] = brightness_adjustment[mask_bool] * 255
+    else:  # Bright color
+        # Keep most of original brightness, slight adjustment
+        image_hsv[mask_bool, 2] = original_v[mask_bool] * (0.8 + target_brightness * 0.2)
+
+    # Convert back to RGB/BGR
     image_hsv = np.clip(image_hsv, 0, 255).astype(np.uint8)
     colored_rgb = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2RGB)
     colored_bgr = cv2.cvtColor(colored_rgb, cv2.COLOR_RGB2BGR)
 
-    # Only apply masked pixels to result (only BGR channels)
+    # Apply only to masked regions
     result[mask_bool, :3] = colored_bgr[mask_bool]
 
     return result
@@ -668,9 +738,73 @@ def segment_image():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# OLD COLORIZE ENDPOINT (COMMENTED OUT - KEPT FOR REFERENCE)
+# ============================================================================
+# @app.route('/api/colorize', methods=['POST'])
+# def colorize_image():
+#     """Apply color to segmented image (ORIGINAL HSV METHOD)"""
+#     try:
+#         data = request.json
+#
+#         # Get parameters
+#         image_data = data.get('image')  # Base64 encoded
+#         mask_data = data.get('mask')    # Base64 encoded
+#         color_hex = data.get('color', '#dc2626')
+#
+#         # Decode image
+#         image_bytes = base64.b64decode(image_data.split(',')[1])
+#         image_pil = Image.open(BytesIO(image_bytes))
+#         image_np = np.array(image_pil)
+#
+#         # Convert to BGR for OpenCV and ensure 3 channels
+#         if len(image_np.shape) == 3:
+#             if image_np.shape[2] == 4:
+#                 # RGBA to BGR (strip alpha channel)
+#                 image_np = cv2.cvtColor(image_np, cv2.COLOR_RGBA2BGR)
+#             elif image_np.shape[2] == 3:
+#                 # RGB to BGR
+#                 image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+#         elif len(image_np.shape) == 2:
+#             # Grayscale to BGR
+#             image_np = cv2.cvtColor(image_np, cv2.COLOR_GRAY2BGR)
+#
+#         # Decode mask
+#         mask_bytes = base64.b64decode(mask_data.split(',')[1])
+#         mask_pil = Image.open(BytesIO(mask_bytes))
+#         mask_np = np.array(mask_pil)
+#
+#         # Ensure mask is single channel
+#         if len(mask_np.shape) == 3:
+#             mask_np = cv2.cvtColor(mask_np, cv2.COLOR_RGB2GRAY)
+#
+#         # Apply HSV color transformation (ORIGINAL)
+#         result_np = apply_hsv_color(image_np, mask_np, color_hex)
+#
+#         # Convert back to RGB for frontend
+#         result_rgb = cv2.cvtColor(result_np, cv2.COLOR_BGR2RGB)
+#
+#         # Encode result
+#         result_pil = Image.fromarray(result_rgb)
+#         buffered = BytesIO()
+#         result_pil.save(buffered, format='PNG')
+#         result_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+#
+#         return jsonify({
+#             'success': True,
+#             'result': f'data:image/png;base64,{result_base64}'
+#         })
+#
+#     except Exception as e:
+#         print(f"Error in colorize_image: {e}")
+#         import traceback
+#         traceback.print_exc()
+#         return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/colorize', methods=['POST'])
 def colorize_image():
-    """Apply color to segmented image"""
+    """Apply color to segmented image using HYBRID method (lighting-preserving with dark color support)"""
     try:
         data = request.json
 
@@ -705,8 +839,8 @@ def colorize_image():
         if len(mask_np.shape) == 3:
             mask_np = cv2.cvtColor(mask_np, cv2.COLOR_RGB2GRAY)
 
-        # Apply HSV color transformation
-        result_np = apply_hsv_color(image_np, mask_np, color_hex)
+        # Apply HYBRID lighting-preserving method
+        result_np = apply_lighting_preserving_color(image_np, mask_np, color_hex)
 
         # Convert back to RGB for frontend
         result_rgb = cv2.cvtColor(result_np, cv2.COLOR_BGR2RGB)

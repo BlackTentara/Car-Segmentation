@@ -43,3 +43,4 @@ web_skripsi/mmdetection/
 *.docx
 *.xlsx
 ~$*
+nul
