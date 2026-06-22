@@ -44,10 +44,28 @@ CONFIG_PATHS = {
 
 # Class names (21 car parts)
 CLASS_NAMES = [
-    'Hood', 'Front_door', 'Rear_door', 'Front_fender', 'Rear_fender',
-    'Trunk', 'Roof', 'Bumper', 'Front_panel', 'Rear_panel',
-    'Fender', 'Quarter_panel', 'Windshield', 'Front_glass', 'Rear_glass',
-    'Hood', 'Trunk_lid', 'Door', 'Panel', 'Back_bumper', 'Front_bumper'
+    'carros',           # 0
+    'Back-bumper',      # 1 W
+    'Back-door',        # 2 W
+    'Back-wheel',       # 3 UW
+    'Back-window',      # 4 UW
+    'Back-windshield',  # 5 UW
+    'Fender',           # 6 W
+    'Front-bumper',     # 7 W
+    'Front-door',       # 8 W
+    'Front-wheel',      # 9 UW
+    'Front-window',     # 10 UW
+    'Grille',           # 11 UW   
+    'Headlight',        # 12 UW
+    'Hood',             # 13 W
+    'License-plate',    # 14 UW
+    'Mirror',           # 15 W
+    'Quarter-panel',    # 16 W
+    'Rocker-panel',     # 17 W
+    'Roof',             # 18 W
+    'Tail-light',       # 19 UW
+    'Trunk',            # 20 W
+    'Windshield',       # 21 UW
 ]
 
 # Wrappable/Unwrappable class IDs (1-based indexing)
@@ -233,7 +251,7 @@ def initialize_models():
 # INFERENCE FUNCTIONS
 # ============================================================================
 
-def check_car_in_image(image_np, conf_threshold=0.4):
+def check_car_in_image(image_np, conf_threshold=0.3):
     """
     Pre-filter: Check if there's a car in the image using COCO YOLO detector
     Returns: (has_car: bool, confidence: float)
@@ -318,7 +336,7 @@ def run_yolosam_inference(model_dict, image_np, conf_threshold=0.5):
     h, w = image_np.shape[:2]
 
     # Run YOLO detection
-    results = yolo_model.predict(image_np, conf=conf_threshold, iou=0.7, verbose=False)
+    results = yolo_model.predict(image_np, conf=conf_threshold, iou=0.5, verbose=False)
 
     masks_list = []
     scores_list = []
