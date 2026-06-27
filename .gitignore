@@ -23,7 +23,7 @@ Thumbs.db
 
 # Dataset and MMDetection folders
 deteccion-partes-2/
-mmdetection/
+/mmdetection/
 
 # Training folder - ignore everything except batch2 notebooks
 training/*
@@ -52,7 +52,10 @@ testing/*
 
 # Web skripsi - ignore auto-downloaded dependencies
 web_skripsi/miniconda3/
-web_skripsi/mmdetection/
+web_skripsi/mmdetection/*
+!web_skripsi/mmdetection/configs/
+web_skripsi/mmdetection/configs/*
+!web_skripsi/mmdetection/configs/testing/
 
 # Documents
 *.docx
