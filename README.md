@@ -36,7 +36,13 @@ mkdir mmdetection\configs\testing
 copy testing_configs\* mmdetection\configs\testing\
 ```
 
-## Step 6 — Run the App
+##Step 6 - Install REMBG
+
+```
+.\miniconda3\Scripts\conda.exe run -n openmmlab pip install rembg onnxruntime
+```
+
+## Step 7 — Run the App
 
 ```bash
 python run.py
